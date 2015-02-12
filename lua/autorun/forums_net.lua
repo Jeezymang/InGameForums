@@ -317,6 +317,7 @@ net.Receive( "IGForums_CategoryNET", function( len )
 		local userID = net.ReadUInt( 32 )
 		local iconID = net.ReadUInt( 32 )
 		local time = net.ReadUInt( 32 )
+		local lastPost = net.ReadUInt( 32 )
 		local postCount = net.ReadUInt( 32 )
 		local name = net.ReadString( )
 		local text = net.ReadString( )
@@ -328,6 +329,7 @@ net.Receive( "IGForums_CategoryNET", function( len )
 		LocalPlayer( ).IGForums.Categories[categoryID].Threads[threadID].userID = userID
 		LocalPlayer( ).IGForums.Categories[categoryID].Threads[threadID].iconID = iconID
 		LocalPlayer( ).IGForums.Categories[categoryID].Threads[threadID].postDate = time
+		LocalPlayer( ).IGForums.Categories[categoryID].Threads[threadID].lastPost = lastPost
 		LocalPlayer( ).IGForums.Categories[categoryID].Threads[threadID].name = name
 		LocalPlayer( ).IGForums.Categories[categoryID].Threads[threadID].text = text
 		LocalPlayer( ).IGForums.Categories[categoryID].Threads[threadID].locked = isLocked

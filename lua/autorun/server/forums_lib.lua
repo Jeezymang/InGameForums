@@ -194,6 +194,7 @@ function IGForums:MoveCategory( categoryID, enum )
 	if ( enum == IGFORUMS_CATEGORYMOVEUP ) then
 		if ( currentPriority == 1 ) then return end
 		local switchResultSet = sql.Query( string.format( switchCategoryQuery, currentPriority - 1 ) )
+		if not ( switchResultSet ) then return end
 		sql.Query( string.format( changePriorityQuery, currentPriority, tonumber( switchResultSet[1].id ) ) )
 		sql.Query( string.format( changePriorityQuery, currentPriority - 1, categoryID ) )
 	elseif ( enum == IGFORUMS_CATEGORYMOVEDOWN ) then
@@ -203,6 +204,7 @@ function IGForums:MoveCategory( categoryID, enum )
 		local maxPriority = tonumber( sql.Query( maxPriorityQuery )[1].maxPriority )
 		if ( currentPriority == maxPriority ) then return end
 		local switchResultSet = sql.Query( string.format( switchCategoryQuery, currentPriority + 1 ) )
+		if not ( switchResultSet ) then return end
 		sql.Query( string.format( changePriorityQuery, currentPriority, tonumber( switchResultSet[1].id ) ) )
 		sql.Query( string.format( changePriorityQuery, currentPriority + 1, categoryID ) )
 	end

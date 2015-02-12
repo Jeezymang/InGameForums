@@ -697,9 +697,9 @@ function PANEL:GenerateThreads( categoryID )
 	end
 	for index, thread in pairs ( LocalPlayer( ).IGForums.Categories[categoryID].Threads or { } ) do
 		if ( thread.sticky ) then
-			table.insert( stickyThreadTable, { threadID = index, iconID = thread.iconID, name = thread.name, userID = thread.userID, postDate = thread.postDate, text = thread.text, locked = thread.locked, sticky = thread.sticky, postCount = thread.postCount } )
+			table.insert( stickyThreadTable, { threadID = index, iconID = thread.iconID, name = thread.name, userID = thread.userID, postDate = thread.postDate, lastPost = thread.lastPost, text = thread.text, locked = thread.locked, sticky = thread.sticky, postCount = thread.postCount } )
 		else
-			table.insert( threadTable, { threadID = index, iconID = thread.iconID, name = thread.name, userID = thread.userID, postDate = thread.postDate, text = thread.text, locked = thread.locked, sticky = thread.sticky, postCount = thread.postCount } )
+			table.insert( threadTable, { threadID = index, iconID = thread.iconID, name = thread.name, userID = thread.userID, postDate = thread.postDate, lastPost = thread.lastPost, text = thread.text, locked = thread.locked, sticky = thread.sticky, postCount = thread.postCount } )
 		end
 	end
 	table.SortByMember( stickyThreadTable, "postDate", false )
@@ -810,6 +810,14 @@ function PANEL:CreateThread( dIconLayout, threadTbl, categoryID )
 	dDateLabel:SetTextColor( Color( 0, 0, 0 ) )
 	dDateLabel:SizeToContents( )
 	dDateLabel:SetPos( iconX + ( iconW * 1.5 ), dThreadPanel:GetTall( ) * 0.5 )
+	local dLastPostLabel = vgui.Create( "DLabel", dThreadPanel )
+	dLastPostLabel:SetText( "Last Post: " .. os.date( "%a %b %d %I:%M%p", threadTbl.lastPost ) )
+	dLastPostLabel:SetFont( "IGForums_CategoryDesc" )
+	dLastPostLabel:SetTextColor( Color( 0, 0, 0 ) )
+	dLastPostLabel:SizeToContents( )
+	local dLastPostLabelX, dLastPostLabelY = dLastPostLabel:GetPos( )
+	local dLastPostLabelW, dLastPostLabelH = dLastPostLabel:GetSize( )
+	dLastPostLabel:SetPos( ( dThreadPanel:GetWide( ) * 0.95 ) - dLastPostLabelW, dThreadPanel:GetTall( ) * 0.4 )
 	local dPostCountLabel = vgui.Create( "DLabel", dThreadPanel )
 	dPostCountLabel:SetText( "Post Count: " .. ( threadTbl.postCount or 0 ) )
 	dPostCountLabel:SetFont( "IGForums_CategoryDesc" )
@@ -817,7 +825,7 @@ function PANEL:CreateThread( dIconLayout, threadTbl, categoryID )
 	dPostCountLabel:SizeToContents( )
 	local dPostCountLabelX, dPostCountLabelY = dPostCountLabel:GetPos( )
 	local dPostCountLabelW, dPostCountLabelH = dPostCountLabel:GetSize( )
-	dPostCountLabel:SetPos( ( dThreadPanel:GetWide( ) * 0.95 ) - dPostCountLabelW, dThreadPanel:GetTall( ) * 0.125 )
+	dPostCountLabel:SetPos( ( dThreadPanel:GetWide( ) * 0.95 ) - dPostCountLabelW, dThreadPanel:GetTall( ) * 0.2 )
 	if ( threadTbl.locked ) then
 		local lockedPanel = vgui.Create( "DPanel", dThreadPanel )
 		lockedPanel:SetSize( 48, 48 )

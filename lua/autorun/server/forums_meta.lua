@@ -159,10 +159,17 @@ function meta:NetworkThreads( categoryID )
 	SELECT COUNT( id ) AS amount FROM forum_posts
 	WHERE thread_id = %d;
 	]]
+	local lastPostQuery = [[
+	SELECT MAX( time ) AS lastPost FROM forum_posts
+	WHERE thread_id = %d;
+	]]
 	for index, data in ipairs ( resultSet ) do
+		local lastPost = data.time
 		local postCount = 0
-		local countResultSet = sql.Query( string.format( postQuery, data.id ) )
+		local countResultSet = sql.Query( string.format( postQuery, tonumber( data.id ) ) )
 		if ( countResultSet ) then postCount = tonumber( countResultSet[1].amount ) end
+		local lastPostResultSet = sql.Query( string.format( lastPostQuery, tonumber( data.id ) ) )
+		if ( lastPostResultSet ) then lastPost = ( tonumber( lastPostResultSet[1].lastPost ) or data.time ) end
 		net.Start( "IGForums_CategoryNET" )
 			net.WriteUInt( IGFORUMS_SENDTHREAD, 16 )
 			net.WriteUInt( categoryID, 32 )
@@ -170,6 +177,7 @@ function meta:NetworkThreads( categoryID )
 			net.WriteUInt( data.user_id, 32 )
 			net.WriteUInt( data.icon_id, 32 )
 			net.WriteUInt( data.time, 32 )
+			net.WriteUInt( lastPost, 32 )
 			net.WriteUInt( postCount, 32 )
 			net.WriteString( data.name )
 			net.WriteString( data.text )
