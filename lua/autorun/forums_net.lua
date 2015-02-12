@@ -64,6 +64,14 @@ net.Receive( "IGForums_CategoryNET", function( len, ply )
 		local categoryID = net.ReadUInt( 32 )
 		IGForums:DeleteCategory( categoryID, ply )
 		IGForums:UpdateAllForumViewers( )
+	elseif ( mesType == IGFORUMS_CATEGORYMOVEUP ) then
+		local categoryID = net.ReadUInt( 32 )
+		IGForums:MoveCategory( categoryID, mesType )
+		IGForums:UpdateAllForumViewers( )
+	elseif ( mesType == IGFORUMS_CATEGORYMOVEDOWN ) then
+		local categoryID = net.ReadUInt( 32 )
+		IGForums:MoveCategory( categoryID, mesType )
+		IGForums:UpdateAllForumViewers( )
 	end
 end )
 

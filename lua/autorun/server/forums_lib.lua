@@ -58,18 +58,6 @@ function IGForums:BroadcastUserUpdate( id, enum, value )
 	end
 end
 
-function IGForums:BroadcastRankUpdate( id, rank )
-	for index, ply in ipairs ( player.GetAll( ) ) do
-		ply:UpdatePlayerInfo( id, IGFORUMS_UPDATERANK, rank )
-	end
-end
-
-function IGForums:BroadcastBanUpdate( id, bool )
-	for index, ply in ipairs ( player.GetAll( ) ) do
-		ply:UpdatePlayerInfo( id, IGFORUMS_UPDATEBAN, bool )
-	end
-end
-
 ///////////////////////////////////////////////////////////////
 /// Checks if a specific userID is banned.
 function IGForums:IsIDBanned( userID )
@@ -177,6 +165,50 @@ function IGForums:ToggleThreadLock( threadID, activator )
 end
 
 ///////////////////////////////////////////////////////////////
+/// TSwitches the priority of a category with the one above
+/// it or below it.
+function IGForums:MoveCategory( categoryID, enum )
+	local categoryCount = [[
+	SELECT COUNT( id ) AS amount FROM forum_categories;
+	]]
+	local countResultSet = sql.Query( categoryCount )
+	if ( !countResultSet or tonumber( countResultSet[1].amount ) <= 1 ) then
+		return
+	end
+	local categoryQuery = [[
+	SELECT priority FROM forum_categories
+	WHERE id = %d;
+	]]
+	local resultSet = sql.Query( string.format( categoryQuery, categoryID ) )
+	local currentPriority = tonumber( resultSet[1].priority )
+	local changePriorityQuery = [[
+	UPDATE forum_categories
+	SET priority = %d
+	WHERE id = %d;
+	]]
+	local switchCategoryQuery = [[
+	SELECT id FROM forum_categories
+	WHERE priority = %d
+	LIMIT 1;
+	]]
+	if ( enum == IGFORUMS_CATEGORYMOVEUP ) then
+		if ( currentPriority == 1 ) then return end
+		local switchResultSet = sql.Query( string.format( switchCategoryQuery, currentPriority - 1 ) )
+		sql.Query( string.format( changePriorityQuery, currentPriority, tonumber( switchResultSet[1].id ) ) )
+		sql.Query( string.format( changePriorityQuery, currentPriority - 1, categoryID ) )
+	elseif ( enum == IGFORUMS_CATEGORYMOVEDOWN ) then
+		local maxPriorityQuery = [[
+		SELECT MAX( priority ) AS maxPriority FROM forum_categories;
+		]]
+		local maxPriority = tonumber( sql.Query( maxPriorityQuery )[1].maxPriority )
+		if ( currentPriority == maxPriority ) then return end
+		local switchResultSet = sql.Query( string.format( switchCategoryQuery, currentPriority + 1 ) )
+		sql.Query( string.format( changePriorityQuery, currentPriority, tonumber( switchResultSet[1].id ) ) )
+		sql.Query( string.format( changePriorityQuery, currentPriority + 1, categoryID ) )
+	end
+end
+
+///////////////////////////////////////////////////////////////
 /// Creates a new category.
 function IGForums:CreateCategory( icon, name, desc, priority, activator )
 	local categoryQuery = [[
@@ -184,6 +216,10 @@ function IGForums:CreateCategory( icon, name, desc, priority, activator )
 	( icon_id, name, desc, priority )
 	VALUES( %d, %s, %s, %d );
 	]]
+	local priorityQuery = [[
+	SELECT MAX( priority ) AS lastPriority FROM forum_categories;
+	]]
+	local lastPriority = ( tonumber( sql.Query( priorityQuery )[1].lastPriority ) or 1 )
 	if not ( self:CheckCategorySyntax( icon, name, desc, activator ) ) then return end
 	if not ( self:GetIconID( icon ) ) then
 		if ( IsValid( activator ) ) then
@@ -199,7 +235,7 @@ function IGForums:CreateCategory( icon, name, desc, priority, activator )
 		return 
 	end
 	local iconID = IGForums:GetIconID( icon )
-	sql.Query( string.format( categoryQuery, iconID, SQLStr( name ), SQLStr( desc ), priority ) )
+	sql.Query( string.format( categoryQuery, iconID, SQLStr( name ), SQLStr( desc ), lastPriority + 1 ) )
 	if ( IsValid( activator ) ) then
 		activator:SendForumHint( "You've created the category [ " .. name .. " ].", 3 )
 	end
@@ -230,6 +266,7 @@ function IGForums:DeleteCategory( categoryID, activator )
 	if ( IsValid( activator ) ) then
 		activator:SendForumHint( "You've deleted CategoryID[ " .. categoryID .. " ].", 3 )
 	end
+	self:OrganizeCategories( )
 end
 
 ///////////////////////////////////////////////////////////////
@@ -439,6 +476,27 @@ function IGForums:SetRankByID( userID, rank, activator )
 	self:BroadcastUserUpdate( IGFORUMS_UPDATERANK, userID, rank )
 	if ( IsValid( activator ) ) then
 		activator:SendForumHint( "You've set the rank of UserID[ " .. userID .. " ] to " .. rank .. ".", 3 )
+	end
+end
+
+///////////////////////////////////////////////////////////////
+/// Loops through the categories updating the priority to
+/// start from one and not repeat.
+function IGForums:OrganizeCategories( )
+	local categoryQuery = [[
+	SELECT * FROM forum_categories;
+	]]
+	local resultSet = sql.Query( categoryQuery )
+	if not ( resultSet ) then return end
+	table.SortByMember( resultSet, "priority", true )
+	local categoryTable = { }
+	local updateQuery = [[
+	UPDATE forum_categories
+	SET priority = %d
+	WHERE id = %d;
+	]]
+	for index, data in ipairs( resultSet ) do
+		sql.Query( string.format( updateQuery, index, data.id ) )
 	end
 end
 

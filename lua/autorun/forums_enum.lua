@@ -34,6 +34,8 @@ IGFORUMS_UNBANUSER = 30
 IGFORUMS_SENDMESSAGE = 31
 IGFORUMS_DELETECATEGORY = 32
 IGFORUMS_REQUESTCATEGORIES = 33
+IGFORUMS_CATEGORYMOVEUP = 34
+IGFORUMS_CATEGORYMOVEDOWN = 35
 
 ///////////////////////////////////////////////////////////////
 /// Used within the forums panel, tells the clear frame

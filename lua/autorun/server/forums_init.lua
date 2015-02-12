@@ -70,6 +70,7 @@ hook.Add( "Initialize", "IGForums_Initialize", function( )
 		end
 	end
 	IGForums:CheckVersion( )
+	IGForums:OrganizeCategories( )
 end )
 
 ///////////////////////////////////////////////////////////////
