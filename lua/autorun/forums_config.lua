@@ -61,3 +61,6 @@ ForumsConfig.MaximumThreadContentLength = 1000
 
 ForumsConfig.MinimumPostLength = 10
 ForumsConfig.MaximumPostLength = 1000
+
+ForumsConfig.ThreadsPerPage = 10
+ForumsConfig.PostsPerPage = 10

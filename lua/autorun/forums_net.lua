@@ -57,19 +57,23 @@ net.Receive( "IGForums_CategoryNET", function( len, ply )
 		IGForums:UpdateAllForumViewers( )
 	elseif ( mesType == IGFORUMS_REQUESTCATEGORY ) then
 		local categoryID = net.ReadUInt( 32 )
-		ply:NetworkThreads( categoryID )
+		local pageNumber = net.ReadUInt( 16 )
+		ply:NetworkThreads( categoryID, pageNumber )
 	elseif ( mesType == IGFORUMS_REQUESTCATEGORIES ) then
 		ply:NetworkCategories( )
 	elseif ( mesType == IGFORUMS_DELETECATEGORY ) then
 		local categoryID = net.ReadUInt( 32 )
+		if not ( ply:HasForumPermissions( IGFORUMS_ADMINPERMISSIONS, true ) ) then return end
 		IGForums:DeleteCategory( categoryID, ply )
 		IGForums:UpdateAllForumViewers( )
 	elseif ( mesType == IGFORUMS_CATEGORYMOVEUP ) then
 		local categoryID = net.ReadUInt( 32 )
+		if not ( ply:HasForumPermissions( IGFORUMS_ADMINPERMISSIONS, true ) ) then return end
 		IGForums:MoveCategory( categoryID, mesType )
 		IGForums:UpdateAllForumViewers( )
 	elseif ( mesType == IGFORUMS_CATEGORYMOVEDOWN ) then
 		local categoryID = net.ReadUInt( 32 )
+		if not ( ply:HasForumPermissions( IGFORUMS_ADMINPERMISSIONS, true ) ) then return end
 		IGForums:MoveCategory( categoryID, mesType )
 		IGForums:UpdateAllForumViewers( )
 	end
@@ -93,12 +97,15 @@ net.Receive( "IGForums_ThreadNET", function( len, ply )
 		IGForums:UpdateAllForumViewers( )
 	elseif ( mesType == IGFORUMS_REQUESTTHREAD ) then
 		local threadID = net.ReadUInt( 32 )
-		ply:NetworkPosts( threadID )
+		local pageNumber = net.ReadUInt( 16 )
+		ply:NetworkPosts( threadID, pageNumber )
 	elseif ( mesType == IGFORUMS_CREATEPOST ) then
 		local threadID = net.ReadUInt( 32 )
 		local postContent = net.ReadString( )
+		local pageNumber = net.ReadUInt( 16 )
 		IGForums:CreatePost( ply, threadID, postContent )
-		ply:NetworkPosts( threadID )
+		IGForums:UpdateAllForumViewers( )
+		--ply:NetworkPosts( threadID, pageNumber )
 	elseif ( mesType == IGFORUMS_DELETEALLPOSTS ) then
 		local userID = net.ReadUInt( 32 )
 		if not ( ply:HasForumPermissions( IGFORUMS_MODERATORPERMISSIONS, true ) ) then return end
@@ -289,6 +296,20 @@ net.Receive( "IGForums_ThreadNET", function( len )
 				break
 			end
 		end
+	elseif ( mesType == IGFORUMS_SENDPAGEAMOUNT ) then
+		local threadID = net.ReadUInt( 32 )
+		local categoryID = net.ReadUInt( 32 )
+		local pageAmount = net.ReadUInt( 16 )
+		LocalPlayer( ).IGForums.Categories[categoryID] = LocalPlayer( ).IGForums.Categories[categoryID] or { }
+		LocalPlayer( ).IGForums.Categories[categoryID].Threads[threadID] = LocalPlayer( ).IGForums.Categories[categoryID].Threads[threadID] or { }
+		LocalPlayer( ).IGForums.Categories[categoryID].Threads[threadID].pageAmount = pageAmount
+		if ( IsValid( LocalPlayer( ).IGForums_Viewer ) ) then
+			local lastPage = LocalPlayer( ).IGForums_Viewer.dContentFrame.lastPostPage or 1
+			if ( lastPage > ( pageAmount or 1 ) ) then
+				LocalPlayer( ).IGForums_Viewer.dContentFrame.lastPostPage = ( pageAmount or 1 )
+				LocalPlayer( ).IGForums_Viewer:RefreshView( )
+			end
+		end
 	end
 end )
 
@@ -341,6 +362,21 @@ net.Receive( "IGForums_CategoryNET", function( len )
 	elseif ( mesType == IGFORUMS_DELETECATEGORY ) then
 		local categoryID = net.ReadUInt( 32 )
 		LocalPlayer( ).IGForums.Categories[categoryID] = nil
+		if ( IsValid( LocalPlayer( ).IGForums_Viewer ) ) then
+			LocalPlayer( ).IGForums_Viewer:RefreshView( )
+		end
+	elseif ( mesType == IGFORUMS_SENDPAGEAMOUNT ) then
+		local categoryID = net.ReadUInt( 32 )
+		local pageAmount = net.ReadUInt( 16 )
+		LocalPlayer( ).IGForums.Categories[categoryID] = LocalPlayer( ).IGForums.Categories[categoryID] or { }
+		LocalPlayer( ).IGForums.Categories[categoryID].pageAmount = pageAmount
+		if ( IsValid( LocalPlayer( ).IGForums_Viewer ) ) then
+			local lastPage = LocalPlayer( ).IGForums_Viewer.dContentFrame.lastPage or 1
+			if ( lastPage > ( pageAmount or 1 ) ) then
+				LocalPlayer( ).IGForums_Viewer.dContentFrame.lastPage = ( pageAmount or 1 )
+				LocalPlayer( ).IGForums_Viewer:RefreshView( )
+			end
+		end
 	end
 end )
 

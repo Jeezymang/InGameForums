@@ -36,6 +36,7 @@ IGFORUMS_DELETECATEGORY = 32
 IGFORUMS_REQUESTCATEGORIES = 33
 IGFORUMS_CATEGORYMOVEUP = 34
 IGFORUMS_CATEGORYMOVEDOWN = 35
+IGFORUMS_SENDPAGEAMOUNT = 36
 
 ///////////////////////////////////////////////////////////////
 /// Used within the forums panel, tells the clear frame

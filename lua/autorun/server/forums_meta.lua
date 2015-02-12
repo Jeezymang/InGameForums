@@ -148,11 +148,34 @@ end
 ///////////////////////////////////////////////////////////////
 /// Networks all the threads within a specific category 
 /// to the client.
-function meta:NetworkThreads( categoryID )
-	local categoryQuery = [[
-	SELECT id, user_id, icon_id, time, name, text, locked, sticky FROM forum_threads
-	WHERE category_id = %d; 
+function meta:NetworkThreads( categoryID, page )
+	local threadCountQuery = [[
+	SELECT COUNT( id ) AS amount FROM forum_threads
+	WHERE category_id = %d;
 	]]
+	local threadCountResultSet = sql.Query( string.format( threadCountQuery, tonumber( categoryID ) ) )
+	if not ( threadCountResultSet ) then return end
+	local threadCount = tonumber( threadCountResultSet[1].amount )
+	local pageAmount = math.ceil( threadCount / ForumsConfig.ThreadsPerPage )
+	net.Start( "IGForums_CategoryNET" )
+		net.WriteUInt( IGFORUMS_SENDPAGEAMOUNT, 16 )
+		net.WriteUInt( categoryID, 32 )
+		net.WriteUInt( pageAmount, 16 )
+	net.Send( self )
+	local categoryQuery
+	if ( pageAmount > 1 ) then
+		local pageOffset = ( page - 1 ) * ForumsConfig.ThreadsPerPage
+		categoryQuery = [[
+		SELECT id, user_id, icon_id, time, name, text, locked, sticky FROM forum_threads
+		WHERE category_id = %d
+		ORDER BY time DESC
+		LIMIT ]] .. pageOffset .. ", " .. ForumsConfig.ThreadsPerPage .. ";"
+	else
+		categoryQuery = [[
+		SELECT id, user_id, icon_id, time, name, text, locked, sticky FROM forum_threads
+		WHERE category_id = %d; 
+		]]
+	end
 	local resultSet = sql.Query( string.format( categoryQuery, categoryID ) )
 	if not ( resultSet ) then return end
 	local postQuery = [[
@@ -190,11 +213,29 @@ end
 ///////////////////////////////////////////////////////////////
 /// Networks all the posts within a specific thread
 /// to the client
-function meta:NetworkPosts( threadID )
-	local threadQuery = [[
-	SELECT id, user_id, time, text FROM forum_posts
+function meta:NetworkPosts( threadID, page )
+	local postCountQuery = [[
+	SELECT COUNT( id ) AS amount FROM forum_posts
 	WHERE thread_id = %d;
 	]]
+	local postCountResultSet = sql.Query( string.format( postCountQuery, tonumber( threadID ) ) )
+	if not ( postCountResultSet ) then return end
+	local postCount = tonumber( postCountResultSet[1].amount )
+	local pageAmount = math.ceil( postCount / ForumsConfig.PostsPerPage )
+	local threadQuery
+	if ( pageAmount > 1 ) then
+		local pageOffset = ( page - 1 ) * ForumsConfig.PostsPerPage
+		threadQuery = [[
+		SELECT id, user_id, time, text FROM forum_posts
+		WHERE thread_id = %d
+		ORDER BY time DESC
+		LIMIT ]] .. pageOffset .. ", " .. ForumsConfig.PostsPerPage .. ";"
+	else
+		threadQuery = [[
+		SELECT id, user_id, time, text FROM forum_posts
+		WHERE thread_id = %d;
+		]]
+	end
 	local categoryQuery = [[
 	SELECT category_id FROM forum_threads
 	WHERE id = %d;
@@ -204,6 +245,12 @@ function meta:NetworkPosts( threadID )
 	local threadCategory = sql.Query( string.format( categoryQuery, threadID ) )
 	if not ( threadCategory ) then return end
 	threadCategory = threadCategory[1].category_id
+	net.Start( "IGForums_ThreadNET" )
+		net.WriteUInt( IGFORUMS_SENDPAGEAMOUNT, 16 )
+		net.WriteUInt( threadID, 32 )
+		net.WriteUInt( threadCategory, 32 )
+		net.WriteUInt( pageAmount, 16 )
+	net.Send( self )
 	for index, data in ipairs ( resultSet or { } ) do
 		net.Start( "IGForums_ThreadNET" )
 			net.WriteUInt( IGFORUMS_SENDTHREAD, 16 )

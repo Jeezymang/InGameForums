@@ -160,18 +160,30 @@ function PANEL:RefreshView( )
 	if ( self.isNotViewing ) then return end
 	if ( tonumber( self.currentCategory ) ) then
 		if ( tonumber( self.currentThread ) ) then
+			if not ( LocalPlayer( ).IGForums.Categories[self.currentCategory] ) then self:GenerateCategories( ) end
+			if not ( LocalPlayer( ).IGForums.Categories[self.currentCategory].Threads[self.currentThread] ) then self:GenerateThreads( self.currentCategory ) end
+			if ( ( LocalPlayer( ).IGForums.Categories[self.currentCategory].Threads[self.currentThread] ) ) then
+				LocalPlayer( ).IGForums.Categories[self.currentCategory].Threads[self.currentThread].Posts = { }
+			end
 			self:GeneratePosts( self.currentCategory, self.currentThread )
 			if not ( tonumber( self.currentThread ) ) then return end
 			net.Start( "IGForums_ThreadNET" )
 				net.WriteUInt( IGFORUMS_REQUESTTHREAD, 16 )
 				net.WriteUInt( self.currentThread, 32 )
+				net.WriteUInt( self.dContentFrame.lastPostPage or 1, 16 )
 			net.SendToServer( )
 		else
+			if not ( LocalPlayer( ).IGForums.Categories[self.currentCategory] ) then self:GenerateCategories( ) return end
+			if ( ( LocalPlayer( ).IGForums.Categories[self.currentCategory] ) ) then
+				LocalPlayer( ).IGForums.Categories[self.currentCategory].Threads = { }
+			end
 			self:GenerateThreads( self.currentCategory )
 			if not ( tonumber( self.currentCategory ) ) then return end
+			local lastPage = self.dContentFrame.lastPage or 1
 			net.Start( "IGForums_CategoryNET" )
 				net.WriteUInt( IGFORUMS_REQUESTCATEGORY, 16 )
 				net.WriteUInt( self.currentCategory, 32 )
+				net.WriteUInt( lastPage, 16 )
 			net.SendToServer( )
 		end
 	else
@@ -458,6 +470,8 @@ function PANEL:GenerateCategories( )
 	self.currentCategory = nil
 	self.currentThread = nil
 	self.isNotViewing = false
+	self.dContentFrame.lastPage = 1
+	self.dContentFrame.lastPostPage = 1
 	local categoryTable = { }
 	for index, category in pairs ( LocalPlayer( ).IGForums.Categories ) do
 		table.insert( categoryTable, { categoryID = index, iconID = category.iconID, name = category.name, desc = category.desc, priority = category.priority } )
@@ -508,10 +522,13 @@ function PANEL:CreateCategory( dIconLayout, categoryTbl )
 	end
 	dCategoryPanel.OnMousePressed = function( pnl, btn )
 		if ( btn == 107 ) then
+			LocalPlayer( ).IGForums.Categories[categoryTbl.categoryID].Threads = { }
 			self:GenerateThreads( categoryTbl.categoryID )
+			local lastPage = self.dContentFrame.lastPage or 1
 			net.Start( "IGForums_CategoryNET" )
 				net.WriteUInt( IGFORUMS_REQUESTCATEGORY, 16 )
 				net.WriteUInt( categoryTbl.categoryID, 32 )
+				net.WriteUInt( lastPage, 16 )
 			net.SendToServer( )
 		elseif ( btn == 108 and LocalPlayer( ):HasForumPermissions( IGFORUMS_ADMINPERMISSIONS ) ) then
 			local popupMenu = DermaMenu( )
@@ -689,6 +706,7 @@ function PANEL:GenerateThreads( categoryID )
 	self.currentCategory = categoryID
 	self.currentThread = nil
 	self.isNotViewing = false
+	self.dContentFrame.lastPostPage = 1
 	local threadTable = { }
 	local stickyThreadTable = { }
 	if not ( LocalPlayer( ).IGForums.Categories[ categoryID ] ) then
@@ -722,6 +740,35 @@ function PANEL:GenerateThreads( categoryID )
 		end
 		table.insert( self.dContentFrame.contentChildren, dPanel )
 	end
+	local pageAmount = LocalPlayer( ).IGForums.Categories[categoryID].pageAmount or 1
+	local pageComboBox = vgui.Create( "DComboBox", self.dContentFrame )
+	pageComboBox:SetSize( self.dContentFrame:GetWide( ) * 0.1, self.dContentFrame:GetTall( ) * 0.05 )
+	pageComboBox:AlignRight( self.dContentFrame:GetWide( ) * 0.05 )
+	pageComboBox:AlignTop( self.dContentFrame:GetTall( ) * 0.025 )
+	for i=1, pageAmount do
+		pageComboBox:AddChoice( i )
+	end
+	pageComboBox.OnSelect = function( pnl, index, value, data )
+		LocalPlayer( ).IGForums.Categories[categoryID].Threads = { }
+		self.dContentFrame.lastPage = value
+		net.Start( "IGForums_CategoryNET" )
+			net.WriteUInt( IGFORUMS_REQUESTCATEGORY, 16 )
+			net.WriteUInt( categoryID, 32 )
+			net.WriteUInt( value, 16 )
+		net.SendToServer( )
+	end
+	local lastPage = self.dContentFrame.lastPage or 1
+	pageComboBox:SetValue( math.Clamp( lastPage, 1, pageAmount ) )
+	table.insert( self.dContentFrame.contentChildren, pageComboBox )
+	local pageComboBoxX, pageComboBoxY = pageComboBox:GetPos( )
+	local pageComboBoxLabel = vgui.Create( "DLabel", self.dContentFrame )
+	pageComboBoxLabel:SetText( "Page: " )
+	pageComboBoxLabel:SetFont( "IGForums_CategoryTitle" )
+	pageComboBoxLabel:SetTextColor( Color( 255, 255, 255 ) )
+	pageComboBoxLabel:SizeToContents( )
+	local pageComboBoxLabelW, pageComboBoxLabelH = pageComboBoxLabel:GetSize( )
+	pageComboBoxLabel:SetPos( pageComboBoxX - pageComboBoxLabelW, pageComboBoxY * 0.8 )
+	table.insert( self.dContentFrame.contentChildren, pageComboBoxLabel )
 	local centerX, centerY = self.dContentFrame:GetWide( ) * 0.5, self.dContentFrame:GetTall( ) * 0.5
 	local buttonWidth = self.dContentFrame:GetWide( ) * 0.2
 	local dPostThreadButton = self:CreateButton( "POST THREAD", "IGForums_CategoryDesc", postMaterial, function( pnl )
@@ -751,9 +798,11 @@ function PANEL:CreateThread( dIconLayout, threadTbl, categoryID )
 	end
 	dThreadPanel.OnMousePressed = function( pnl, btn )
 		if ( btn == 107 ) then
+			LocalPlayer( ).IGForums.Categories[categoryID].Threads[threadTbl.threadID].Posts = { }
 			net.Start( "IGForums_ThreadNET" )
 				net.WriteUInt( IGFORUMS_REQUESTTHREAD, 16 )
 				net.WriteUInt( threadTbl.threadID, 32 )
+				net.WriteUInt( self.dContentFrame.lastPostPage or 1, 16 )
 			net.SendToServer( )
 			self:GeneratePosts( categoryID, threadTbl.threadID )
 		elseif ( btn == 108 and LocalPlayer( ):GetForumsRank( ) == "admin" ) then
@@ -828,8 +877,8 @@ function PANEL:CreateThread( dIconLayout, threadTbl, categoryID )
 	dPostCountLabel:SetPos( ( dThreadPanel:GetWide( ) * 0.95 ) - dPostCountLabelW, dThreadPanel:GetTall( ) * 0.2 )
 	if ( threadTbl.locked ) then
 		local lockedPanel = vgui.Create( "DPanel", dThreadPanel )
-		lockedPanel:SetSize( 48, 48 )
-		lockedPanel:SetPos( 0, dPostCountLabelY + dPostCountLabelH + 12 )
+		lockedPanel:SetSize( 32, 32 )
+		lockedPanel:SetPos( 0, dPostCountLabelY + dPostCountLabelH + 36 )
 		lockedPanel:AlignRight( 32 )
 		lockedPanel.Paint = function( pnl, w, h )
 			surface.SetMaterial( lockMaterial )
@@ -860,6 +909,7 @@ function PANEL:OpenPostCreator( categoryID, threadID )
 			net.WriteUInt( IGFORUMS_CREATEPOST, 16 )
 			net.WriteUInt( threadID, 32 )
 			net.WriteString( self:ParseTextLines( dContentTextEntry:GetValue( ) ) )
+			net.WriteUInt( self.dContentFrame.lastPostPage or 1, 16 )
 		net.SendToServer( )
 		self:GeneratePosts( categoryID, threadID )
 	end, self.dContentFrame:GetWide( ) * 0.4, self.dContentFrame:GetTall( ) * 0.95 )
@@ -892,7 +942,36 @@ function PANEL:GeneratePosts( categoryID, threadID )
 	for index, post in ipairs ( postsTable ) do
 		self:CreatePost( self.dIconLayout, post, index )
 	end
+	local pageAmount = LocalPlayer( ).IGForums.Categories[categoryID].Threads[threadID].pageAmount or 1
+	local pageComboBox = vgui.Create( "DComboBox", self.dContentFrame )
+	pageComboBox:SetSize( self.dContentFrame:GetWide( ) * 0.1, self.dContentFrame:GetTall( ) * 0.05 )
+	pageComboBox:AlignRight( self.dContentFrame:GetWide( ) * 0.05 )
+	pageComboBox:AlignTop( self.dContentFrame:GetTall( ) * 0.025 )
+	for i=1, pageAmount do
+		pageComboBox:AddChoice( i )
+	end
+	pageComboBox.OnSelect = function( pnl, index, value, data )
+		LocalPlayer( ).IGForums.Categories[categoryID].Threads[threadID].Posts = { }
+		self.dContentFrame.lastPostPage = value
+		net.Start( "IGForums_ThreadNET" )
+			net.WriteUInt( IGFORUMS_REQUESTTHREAD, 16 )
+			net.WriteUInt( threadID, 32 )
+			net.WriteUInt( value, 16 )
+		net.SendToServer( )
+	end
+	local lastPage = self.dContentFrame.lastPostPage or 1
+	pageComboBox:SetValue( math.Clamp( lastPage, 1, pageAmount ) )
+	table.insert( self.dContentFrame.contentChildren, pageComboBox )
 	local centerX, centerY = self.dContentFrame:GetWide( ) * 0.5, self.dContentFrame:GetTall( ) * 0.5
+	local pageComboBoxX, pageComboBoxY = pageComboBox:GetPos( )
+	local pageComboBoxLabel = vgui.Create( "DLabel", self.dContentFrame )
+	pageComboBoxLabel:SetText( "Page: " )
+	pageComboBoxLabel:SetFont( "IGForums_CategoryTitle" )
+	pageComboBoxLabel:SetTextColor( Color( 255, 255, 255 ) )
+	pageComboBoxLabel:SizeToContents( )
+	local pageComboBoxLabelW, pageComboBoxLabelH = pageComboBoxLabel:GetSize( )
+	pageComboBoxLabel:SetPos( pageComboBoxX - pageComboBoxLabelW, pageComboBoxY * 0.8 )
+	table.insert( self.dContentFrame.contentChildren, pageComboBoxLabel )
 	local buttonWidth = self.dContentFrame:GetWide( ) * 0.2
 	local isLocked = LocalPlayer( ).IGForums.Categories[categoryID].Threads[threadID].locked
 	local isSticky = LocalPlayer( ).IGForums.Categories[categoryID].Threads[threadID].sticky
