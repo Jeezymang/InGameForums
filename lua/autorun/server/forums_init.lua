@@ -1,3 +1,5 @@
+IGForumsVersion = 0.1
+
 util.AddNetworkString( "IGForums_ForumsNET" )
 util.AddNetworkString( "IGForums_ThreadNET" )
 util.AddNetworkString( "IGForums_CategoryNET" )
@@ -67,6 +69,7 @@ hook.Add( "Initialize", "IGForums_Initialize", function( )
 			sql.Query( string.format( iconQuery, SQLStr( iconPath .. icon ) ) )
 		end
 	end
+	IGForums:CheckVersion( )
 end )
 
 ///////////////////////////////////////////////////////////////

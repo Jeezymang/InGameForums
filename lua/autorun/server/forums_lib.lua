@@ -454,3 +454,22 @@ function IGForums:GetRankByID( userID )
 	if ( resultSet ) then userRank = resultSet[1].rank end
 	return userRank
 end
+
+///////////////////////////////////////////////////////////////
+/// Simple version checker
+function IGForums:CheckVersion( )
+	http.Fetch( "http://www.jeezy.rocks/gmod/igforums_version.php?VersionNumber=" .. IGForumsVersion,
+	function( body, len, headers, code )
+		if ( string.find( body, "out of date" ) ) then
+			MsgC( Color( 175, 45, 45 ), "--------WARNING--------\n")
+			MsgC( Color( 175, 45, 45 ), "-----------------------\n")
+			MsgC( Color( 150, 160, 255 ), "[In-Game Forums] :: ", Color( 175, 125, 125 ), body, "\n" )
+			MsgC( Color( 175, 45, 45 ), "-----------------------\n")
+		else
+			MsgC( Color( 45, 175, 45 ), "-----------------------\n")
+			MsgC( Color( 45, 175, 45 ), "-----------------------\n")
+			MsgC( Color( 150, 160, 255 ), "[In-Game Forums] :: ", Color( 125, 175, 125 ), body, "\n" )
+			MsgC( Color( 45, 175, 45 ), "-----------------------\n")
+		end
+	end )
+end
