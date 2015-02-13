@@ -27,6 +27,7 @@ local unBanUserMaterial = Material( "vgui/ingame_forums/icons/add_user-48.png", 
 local refreshMaterial = Material( "vgui/ingame_forums/icons/refresh-48.png", "noclamp smooth" )
 local stickyMaterial = Material( "vgui/ingame_forums/icons/pin-48.png", "noclamp smooth" )
 local unstickyMaterial = Material( "vgui/ingame_forums/icons/low_priority-48.png", "noclamp smooth" )
+local logsMaterial = Material( "vgui/ingame_forums/icons/files.png", "noclamp smooth" )
 local scrW, scrH = ScrW( ), ScrH( )
 local plyMeta = FindMetaTable( "Player" )
 
@@ -269,16 +270,26 @@ function PANEL:CreateFonts( )
 	} )
 end
 
-function PANEL:CreateDIconLayout( )
+function PANEL:CreateDIconLayout( isLocal, widthMulti, heightMulti, xMulti, yMulti, spaceX, spaceY )
+	local widthMulti = widthMulti or 0.9
+	local heightMulti = heightMulti or 0.7
+	local xMulti = xMulti or 0.05
+	local yMulti = yMulti or 0.1
+	local spaceX = spaceX or 5
+	local spaceY = spaceY or 5
 	local dScrollPanel = vgui.Create( "DScrollPanel", self.dContentFrame )
-	dScrollPanel:SetSize( self.dContentFrame:GetWide( ) * 0.9, self.dContentFrame:GetTall( ) * 0.7 )
-	dScrollPanel:SetPos( self.dContentFrame:GetWide( ) * 0.05, self.dContentFrame:GetTall( ) * 0.1 )
-	self.dIconLayout = vgui.Create( "DIconLayout", dScrollPanel )
-	self.dIconLayout:SetSize( dScrollPanel:GetWide( ), dScrollPanel:GetTall( ) )
-	self.dIconLayout:SetPos( 0, 0 )
-	self.dIconLayout:SetSpaceX( 5 )
-	self.dIconLayout:SetSpaceY( 5 )
+	dScrollPanel:SetSize( self.dContentFrame:GetWide( ) * widthMulti, self.dContentFrame:GetTall( ) * heightMulti )
+	dScrollPanel:SetPos( self.dContentFrame:GetWide( ) * xMulti, self.dContentFrame:GetTall( ) * yMulti )
+	local dIconLayout = vgui.Create( "DIconLayout", dScrollPanel )
+	dIconLayout:SetSize( dScrollPanel:GetWide( ), dScrollPanel:GetTall( ) )
+	dIconLayout:SetPos( 0, 0 )
+	dIconLayout:SetSpaceX( spaceX )
+	dIconLayout:SetSpaceY( spaceY )
+	if not ( isLocal ) then
+		self.dIconLayout = dIconLayout
+	end
 	table.insert( self.dContentFrame.contentChildren, dScrollPanel )
+	return dIconLayout
 end
 
 function PANEL:ClearContentFrame( enum )
@@ -357,6 +368,101 @@ local function AttemptPlayerRankSet( rank, userID )
 	net.SendToServer( )
 end
 
+function PANEL:OpenLogViewer( dontRequestLogs )
+	self.isNotViewing = true
+	self:ClearContentFrame( )
+	if not ( dontRequestLogs ) then
+		LocalPlayer( ).IGForums = LocalPlayer( ).IGForums or { }
+		LocalPlayer( ).IGForums.Logs = { }
+		net.Start( "IGForums_ForumsNET" )
+			net.WriteUInt( IGFORUMS_REQUESTLOGFILES, 16 )
+		net.SendToServer( )
+	end
+	LocalPlayer( ).IGForums = LocalPlayer( ).IGForums or { }
+	LocalPlayer( ).IGForums.Logs = LocalPlayer( ).IGForums.Logs or { }
+	local backButton = self:CreateButton( "GO BACK", "IGForums_CategoryDesc", backMaterial, function( pnl )
+		self:OpenUserManagement( )
+	end, self.dContentFrame:GetWide( ) * 0.5, self.dContentFrame:GetTall( ) * 0.95 )
+	if ( table.Count( LocalPlayer( ).IGForums.Logs ) == 0 ) then
+		local dLabel = vgui.Create( "DLabel", self.dContentFrame )
+		dLabel:SetText( "No Log Files Could Be Found" )
+		dLabel:SetFont( "IGForums_CategoryTitle" )
+		dLabel:SizeToContents( )
+		dLabel:CenterHorizontal( )
+		dLabel:AlignTop( self.dContentFrame:GetTall( ) * 0.3 )
+		table.insert( self.dContentFrame.contentChildren, dLabel )
+		local dImagePanel = vgui.Create( "DPanel", self.dContentFrame )
+		dImagePanel:SetSize( 48, 48 )
+		dImagePanel:CenterHorizontal( )
+		dImagePanel:AlignTop( self.dContentFrame:GetTall( ) * 0.4 )
+		dImagePanel.Paint = function( pnl, w, h )
+			surface.SetDrawColor( Color( 175, 75, 75 ) )
+			surface.SetMaterial( cancelMaterial )
+			surface.DrawTexturedRect( 0, 0, 48, 48 )
+			surface.SetDrawColor( Color( 255, 255, 255 ) )
+		end
+		table.insert( self.dContentFrame.contentChildren, dImagePanel )
+		return
+	end
+	local daysListLabel = vgui.Create( "DLabel", self.dContentFrame )
+	daysListLabel:SetText( "Log Files" )
+	daysListLabel:SetFont( "IGForums_CategoryTitle" )
+	daysListLabel:SizeToContents( )
+	daysListLabel:CenterHorizontal( )
+	daysListLabel:AlignTop( self.dContentFrame:GetTall( ) * 0.01 )
+	daysListLabel:SetTextColor( Color( 255, 255, 255 ) )
+	table.insert( self.dContentFrame.contentChildren, daysListLabel )
+	local daysList = self:CreateDIconLayout( true, 0.8, 0.4, 0.1, 0.065 )
+	for fileName, fileData in pairs ( LocalPlayer( ).IGForums.Logs ) do
+		local filePanel = daysList:Add( "DPanel" )
+		filePanel:SetSize( daysList:GetWide( ), 40 )
+		filePanel.Paint = function( pnl, w, h )
+			local drawColor = Color( 255, 255, 255 )
+			if ( daysList.selectedPanel == pnl ) then drawColor = Color( 26, 188, 156 ) end
+			draw.RoundedBox( 0, 0, 0, w, h, drawColor )
+			draw.SimpleText( fileName, "IGForums_CategoryTitle", w * 0.5, h * 0.2, Color( 0, 0, 0 ), TEXT_ALIGN_CENTER )
+		end
+		filePanel.OnMousePressed = function( pnl, btn )
+			LocalPlayer( ).IGForums.Logs[fileName] = nil
+			self.lastLogFileViewed = fileName
+			net.Start( "IGForums_ForumsNET" )
+				net.WriteUInt( IGFORUMS_REQUESTLOGFILE, 16 )
+				net.WriteString( fileName )
+			net.SendToServer( )
+		end
+		filePanel.OnCursorEntered = function( pnl )
+			daysList.selectedPanel = pnl
+		end
+		filePanel.OnCursorExited = function( pnl )
+			daysList.selectedPanel = nil
+		end
+	end
+	local logList = self:CreateDIconLayout( true, 0.8, 0.3, 0.1, 0.46 )
+	if ( LocalPlayer( ).IGForums.Logs[self.lastLogFileViewed] ) then
+		local logListLabel = vgui.Create( "DLabel", self.dContentFrame )
+		logListLabel:SetText( "Log Entries" )
+		logListLabel:SetFont( "IGForums_CategoryTitle" )
+		logListLabel:SizeToContents( )
+		logListLabel:CenterHorizontal( )
+		logListLabel:AlignTop( self.dContentFrame:GetTall( ) * 0.4 )
+		logListLabel:SetTextColor( Color( 255, 255, 255 ) )
+		table.insert( self.dContentFrame.contentChildren, logListLabel )
+		for index, lineData in ipairs ( LocalPlayer( ).IGForums.Logs[self.lastLogFileViewed] ) do
+			local fileLinePanel = logList:Add( "DPanel" )
+			fileLinePanel:SetSize( logList:GetWide( ), 40 )
+			local lineTextEntry = vgui.Create( "DTextEntry", fileLinePanel )
+			lineTextEntry:SetSize( fileLinePanel:GetWide( ) * 0.95, fileLinePanel:GetTall( ) )
+			lineTextEntry:Center( )
+			lineTextEntry:SetMultiline( true )
+			lineTextEntry:SetText( lineData )
+			lineTextEntry.OnTextChanged = function( pnl, txt )
+				pnl:SetText( lineData )
+			end
+			lineTextEntry:SetVerticalScrollbarEnabled( true )
+		end
+	end
+end
+
 function PANEL:OpenUserManagement( )
 	self.isNotViewing = true
 	self:ClearContentFrame( )
@@ -428,9 +534,12 @@ function PANEL:OpenUserManagement( )
 			net.WriteUInt( userListTable[ selectedLine ].userID, 32 )
 		net.SendToServer( )
 	end, self.dContentFrame:GetWide( ) * 0.8, self.dContentFrame:GetTall( ) * 0.65 )
+	local logsButton = self:CreateButton( "VIEW LOGS", "IGForums_CategoryDesc", logsMaterial, function( pnl )
+		self:OpenLogViewer( )
+	end, self.dContentFrame:GetWide( ) * 0.4, self.dContentFrame:GetTall( ) * 0.95 )
 	local backButton = self:CreateButton( "GO BACK", "IGForums_CategoryDesc", backMaterial, function( pnl )
 		self:GenerateCategories( )
-	end, self.dContentFrame:GetWide( ) * 0.5, self.dContentFrame:GetTall( ) * 0.95 )
+	end, self.dContentFrame:GetWide( ) * 0.6, self.dContentFrame:GetTall( ) * 0.95 )
 end
 
 function PANEL:OpenCategoryCreator( )
@@ -544,12 +653,12 @@ function PANEL:GenerateCategories( )
 	end
 	if ( #categoryTable == 0 ) then
 		local dPanel = self.dIconLayout:Add( "DPanel" )
-		dPanel:SetSize( self.dIconLayout:GetWide( ), self.dContentFrame:GetTall( ) * 0.3 )
+		dPanel:SetSize( self.dContentFrame:GetWide( ), self.dContentFrame:GetTall( ) * 0.4 )
 		dPanel.Paint = function( pnl, w, h )
-			draw.RoundedBox( 16, ( w * 0.5 ) - 32, ( h * 0.6 ), 64, 64, Color( 175, 45, 45, 50 ) )
+			draw.RoundedBox( 16, ( w * 0.5 ) - 32, ( h * 0.6 ), 48, 48, Color( 175, 45, 45, 50 ) )
 			surface.SetDrawColor( Color( 175, 75, 75 ) )
 			surface.SetMaterial( cancelMaterial )
-			surface.DrawTexturedRect( ( w * 0.5 ) - 32, ( h * 0.6 ), 64, 64 )
+			surface.DrawTexturedRect( ( w * 0.5 ) - 32, ( h * 0.6 ), 48, 48 )
 			draw.SimpleText( "There are no existing categories.", "IGForums_MessageHint", w * 0.5, h * 0.4, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER )
 			surface.SetDrawColor( Color( 255, 255, 255, 255 ) )
 		end
@@ -791,12 +900,12 @@ function PANEL:GenerateThreads( categoryID )
 	end
 	if ( #threadTable == 0 and #stickyThreadTable == 0 ) then
 		local dPanel = self.dIconLayout:Add( "DPanel" )
-		dPanel:SetSize( self.dIconLayout:GetWide( ), self.dContentFrame:GetTall( ) * 0.3 )
+		dPanel:SetSize( self.dIconLayout:GetWide( ), self.dContentFrame:GetTall( ) * 0.4 )
 		dPanel.Paint = function( pnl, w, h )
-			draw.RoundedBox( 16, ( w * 0.5 ) - 32, ( h * 0.6 ), 64, 64, Color( 175, 45, 45, 50 ) )
+			draw.RoundedBox( 16, ( w * 0.5 ) - 32, ( h * 0.6 ), 48, 48, Color( 175, 45, 45, 50 ) )
 			surface.SetDrawColor( Color( 175, 75, 75 ) )
 			surface.SetMaterial( cancelMaterial )
-			surface.DrawTexturedRect( ( w * 0.5 ) - 32, ( h * 0.6 ), 64, 64 )
+			surface.DrawTexturedRect( ( w * 0.5 ) - 32, ( h * 0.6 ), 48, 48 )
 			draw.SimpleText( "There are no threads in this category.", "IGForums_MessageHint", w * 0.5, h * 0.4, Color( 255, 255, 255 ), TEXT_ALIGN_CENTER )
 			surface.SetDrawColor( Color( 255, 255, 255, 255 ) )
 		end

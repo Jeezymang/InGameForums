@@ -35,6 +35,28 @@ net.Receive( "IGForums_ForumsNET", function( len, ply )
 			ply:NetworkUsers( true )
 			ply.requestedForumUsers = true
 		end
+	elseif ( mesType == IGFORUMS_REQUESTLOGFILES ) then
+		if not ( ply:HasForumPermissions( IGFORUMS_MODERATORPERMISSIONS, true ) ) then return end
+		for index, logFile in pairs ( file.Find( "ingame_forums/logs/*.txt", "DATA" ) ) do
+			net.Start( "IGForums_ForumsNET" )
+				net.WriteUInt( IGFORUMS_SENDLOGFILENAME, 16 )
+				net.WriteString( logFile )
+			net.Send( ply )
+		end
+	elseif ( mesType == IGFORUMS_REQUESTLOGFILE ) then
+		if not ( ply:HasForumPermissions( IGFORUMS_MODERATORPERMISSIONS, true ) ) then return end
+		local fileName = net.ReadString( )
+		local path = "ingame_forums/logs/" .. fileName
+		if not ( file.Exists( path, "DATA" ) ) then return end
+		local fileData = file.Read( path, "DATA" )
+		local fileLines = string.Explode( "\n", fileData )
+		for index, fileLine in ipairs ( fileLines ) do
+			net.Start( "IGForums_ForumsNET" )
+				net.WriteUInt( IGFORUMS_SENDLOGFILEDATA, 16 )
+				net.WriteString( fileName )
+				net.WriteString( fileLine )
+			net.Send( ply )
+		end
 	end
 end )
 
@@ -400,6 +422,25 @@ net.Receive( "IGForums_ForumsNET", function( len )
 			local message = net.ReadString( )
 			local length = net.ReadUInt( 16 )
 			LocalPlayer( ).IGForums_Viewer:ActivateMessageBox( message, length )
+		end
+	elseif ( mesType == IGFORUMS_SENDLOGFILENAME ) then
+		local logFileName = net.ReadString( )
+		LocalPlayer( ).IGForums = LocalPlayer( ).IGForums or { }
+		LocalPlayer( ).IGForums.Logs = LocalPlayer( ).IGForums.Logs or { }
+		LocalPlayer( ).IGForums.Logs[logFileName] = LocalPlayer( ).IGForums.Logs[logFileName] or { }
+		if ( IsValid( LocalPlayer( ).IGForums_Viewer ) ) then
+			LocalPlayer( ).IGForums_Viewer:OpenLogViewer( true )
+		end
+	elseif ( mesType == IGFORUMS_SENDLOGFILEDATA ) then
+		LocalPlayer( ).IGForums = LocalPlayer( ).IGForums or { }
+		LocalPlayer( ).IGForums.Logs = LocalPlayer( ).IGForums.Logs or { }
+		local fileName = net.ReadString( )
+		local fileLine = net.ReadString( )
+		if ( fileLine == "" ) then return end
+		LocalPlayer( ).IGForums.Logs[fileName] = LocalPlayer( ).IGForums.Logs[fileName] or { }
+		table.insert( LocalPlayer( ).IGForums.Logs[fileName], fileLine )
+		if ( IsValid( LocalPlayer( ).IGForums_Viewer ) ) then
+			LocalPlayer( ).IGForums_Viewer:OpenLogViewer( true )
 		end
 	end
 end )

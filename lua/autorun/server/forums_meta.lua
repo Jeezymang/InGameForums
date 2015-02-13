@@ -301,3 +301,12 @@ function meta:NetworkUsers( updatePostCount )
 		IGForums:UpdatePostCountByID( data.user_id, self )
 	end
 end
+
+///////////////////////////////////////////////////////////////
+/// Used as a helper function when logging
+function meta:GetNiceInfo( )
+	local forumsID = self:GetForumsID( )
+	local steamID = self:SteamID( )
+	local name = self:Nick( )
+	return ( "[" .. forumsID .. "]-[" .. steamID .. "]-[" .. name .. "]" )
+end

@@ -82,6 +82,7 @@ function IGForums:BanUserByID( userID, activator )
 	self:BroadcastUserUpdate( IGFORUMS_UPDATEBAN, userID, true )
 	if ( IsValid( activator ) ) then
 		activator:SendForumHint( "You've banned UserID[ " .. userID .. " ] from the Forums.", 3 )
+		self:Log( activator:GetNiceInfo( ) .. " has banned UserID[ " .. userID .. " ]." )
 	end
 end
 
@@ -97,6 +98,7 @@ function IGForums:UnBanUserByID( userID, activator )
 	self:BroadcastUserUpdate( IGFORUMS_UPDATEBAN, userID, false )
 	if ( IsValid( activator ) ) then
 		activator:SendForumHint( "You've unbanned UserID[ " .. userID .. " ] from the Forums.", 3 )
+		self:Log( activator:GetNiceInfo( ) .. " has unbanned UserID[ " .. userID .. " ]." )
 	end
 end
 
@@ -126,8 +128,10 @@ function IGForums:ToggleThreadSticky( threadID, activator )
 	if ( IsValid( activator ) ) then
 		if ( newStatus ) then
 			activator:SendForumHint( "You've stickied ThreadID[ " .. threadID .. " ].", 3 )
+			self:Log( activator:GetNiceInfo( ) .. " has stickied ThreadID[ " .. threadID .. " ]." )
 		else
 			activator:SendForumHint( "You've unstickied ThreadID[ " .. threadID .. " ].", 3 )
+			self:Log( activator:GetNiceInfo( ) .. " has stickied ThreadID[ " .. threadID .. " ]." )
 		end
 	end
 end
@@ -158,8 +162,10 @@ function IGForums:ToggleThreadLock( threadID, activator )
 	if ( IsValid( activator ) ) then
 		if ( newStatus ) then
 			activator:SendForumHint( "You've locked ThreadID[ " .. threadID .. " ].", 3 )
+			self:Log( activator:GetNiceInfo( ) .. " has locked ThreadID[ " .. threadID .. " ]." )
 		else
 			activator:SendForumHint( "You've unlocked ThreadID[ " .. threadID .. " ].", 3 )
+			self:Log( activator:GetNiceInfo( ) .. " has unlocked ThreadID[ " .. threadID .. " ]." )
 		end
 	end
 end
@@ -240,6 +246,7 @@ function IGForums:CreateCategory( icon, name, desc, priority, activator )
 	sql.Query( string.format( categoryQuery, iconID, SQLStr( name ), SQLStr( desc ), lastPriority + 1 ) )
 	if ( IsValid( activator ) ) then
 		activator:SendForumHint( "You've created the category [ " .. name .. " ].", 3 )
+		self:Log( activator:GetNiceInfo( ) .. " has created the category [ " .. name .. " ]." )
 	end
 end
 
@@ -267,6 +274,7 @@ function IGForums:DeleteCategory( categoryID, activator )
 	net.Broadcast( )
 	if ( IsValid( activator ) ) then
 		activator:SendForumHint( "You've deleted CategoryID[ " .. categoryID .. " ].", 3 )
+		self:Log( activator:GetNiceInfo( ) .. " has deleted CategoryID[ " .. categoryID .. " ]." )
 	end
 	self:OrganizeCategories( )
 end
@@ -325,6 +333,7 @@ function IGForums:DeletePost( postID, activator )
 	self:UpdatePostCountByID( resultSet[1].user_id, player.GetAll( ) )
 	if ( IsValid( activator ) ) then
 		activator:SendForumHint( "You've deleted PostID[ " .. postID .. " ].", 3 )
+		self:Log( activator:GetNiceInfo( ) .. " has deleted PostID[ " .. postID .. " ]." )
 	end
 end
 
@@ -342,6 +351,7 @@ function IGForums:DeletePostsByID( id, activator )
 	net.Broadcast( )
 	if ( IsValid( activator ) ) then
 		activator:SendForumHint( "You've deleted all of UserID[ " .. id .. " ]'s posts.", 3 )
+		self:Log( activator:GetNiceInfo( ) .. " has deleted all of UserID[ " .. id .. " ]'s posts." )
 	end
 	self:UpdatePostCountByID( id, player.GetAll( ) )
 	local threadQuery = [[
@@ -451,6 +461,7 @@ function IGForums:DeleteThread( threadID, activator )
 	net.Broadcast( )
 	if ( IsValid( activator ) ) then
 		activator:SendForumHint( "You've deleted ThreadID[ " .. threadID .. " ].", 3 )
+		self:Log( activator:GetNiceInfo( ) .. " has deleted ThreadID[ " .. threadID .. " ]" )
 	end
 end
 
@@ -478,6 +489,7 @@ function IGForums:SetRankByID( userID, rank, activator )
 	self:BroadcastUserUpdate( IGFORUMS_UPDATERANK, userID, rank )
 	if ( IsValid( activator ) ) then
 		activator:SendForumHint( "You've set the rank of UserID[ " .. userID .. " ] to " .. rank .. ".", 3 )
+		self:Log( activator:GetNiceInfo( ) .. " has set UserID[ " .. userID .. " ]'s rank to " .. rank .. "." )
 	end
 end
 
@@ -532,4 +544,19 @@ function IGForums:CheckVersion( )
 			MsgC( Color( 45, 175, 45 ), "-----------------------\n")
 		end
 	end )
+end
+
+///////////////////////////////////////////////////////////////
+/// Logging to track the action's of admins and moderators
+if not ( file.IsDir( "ingame_forums", "DATA" ) ) then file.CreateDir( "ingame_forums" ) end
+if not ( file.IsDir( "ingame_forums/logs", "DATA" ) ) then file.CreateDir( "ingame_forums/logs" ) end
+local logDirectory = "ingame_forums/logs/"
+function IGForums:Log( message )
+	local fileName = os.date( "%b%d_%y.txt" )
+	local timeString = os.date( "[%a %b %d %I:%M%p] " )
+	if not ( file.Exists( logDirectory .. fileName, "DATA" ) ) then
+		file.Write( logDirectory .. fileName, timeString .. message .. "\n" )
+	else
+		file.Append( logDirectory .. fileName, timeString .. message .. "\n" )
+	end
 end

@@ -33,6 +33,12 @@ function IGForums:CheckCategorySyntax( icon, title, desc, ply )
 	elseif not ( string.find( desc, "%a" ) ) then
 		messError = "Your description must contains characters."
 		isCorrect = false
+	elseif ( string.find( title, [[\n]] ) ) then
+		messError = "Your title cannot contain new-line characters."
+		isCorrect = false
+	elseif ( string.find( desc, [[\n]] ) ) then
+		messError = "Your description cannot contain new-line characters."
+		isCorrect = false
 	elseif ( string.len( title ) < minTitleLength or string.len( title ) > maxTitleLength ) then
 		messError = "Your title must be inbetween " .. minTitleLength .. " and " .. maxTitleLength .. " characters."
 		isCorrect = false

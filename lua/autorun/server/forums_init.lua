@@ -96,7 +96,7 @@ hook.Add( "PlayerAuthed", "IGForums_PlayerAuth", function( ply, steamID, uniquei
 		WHERE user_id = %d;
 		]]
 		if ( resultSet[1].name ~= ply:Nick( ) ) then
-			sql.Query( string.format( updateQuery, SQLStr( ply:Nick( ) ), tonumber( resultSet[1].user_id ) ) )
+			sql.Query( string.format( updateQuery, SQLStr( string.Replace( ply:Nick( ), [[\n]], "" ) ), tonumber( resultSet[1].user_id ) ) )
 		end
 	else
 		sql.Query( string.format( playerQuery, util.SteamIDTo64( steamID ), SQLStr( ply:Nick( ) ), SQLStr( rank ), 0 ) )
