@@ -409,5 +409,5 @@ end )
 net.Receive( "IGForums_IconNET", function( len )
 	local iconID = net.ReadUInt( 32 )
 	local iconPath = net.ReadString( )
-	LocalPlayer( ).IGForums.Icons[iconID] = { path = iconPath, mat = Material( iconPath ) }
+	LocalPlayer( ).IGForums.Icons[iconID] = { path = iconPath, mat = Material( iconPath, "noclamp smooth" ) }
 end )

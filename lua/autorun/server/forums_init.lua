@@ -1,4 +1,4 @@
-IGForumsVersion = 0.2
+IGForumsVersion = 0.3
 
 util.AddNetworkString( "IGForums_ForumsNET" )
 util.AddNetworkString( "IGForums_ThreadNET" )

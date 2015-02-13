@@ -13,8 +13,8 @@ ForumsConfig.PostCooldown = 30 -- The amount of seconds inbetween posting and ma
 /// These are the colors that the user's name will be within
 /// the forum viewer depending on their rank.
 ForumsConfig.Ranks = {
-	["admin"] = { color = Color( 255, 125, 125 ) },
-	["moderator"] = { color = Color( 125, 125, 255 ) },
+	["admin"] = { color = Color( 175, 75, 75 ) },
+	["moderator"] = { color = Color( 75, 75, 175 ) },
 	["user"] = { color = Color( 0, 0, 0 ) }
 }
 
@@ -49,6 +49,7 @@ ForumsConfig.RankPermissions = {
 /// These variables are pretty much self explanitory.
 /// The minimum and maximum amount of characters for titles,
 /// descriptions, ect.
+
 ForumsConfig.MinimumCategoryTitleLength = 5
 ForumsConfig.MaximumCategoryTitleLength = 80
 ForumsConfig.MinimumCategoryDescriptionLength = 10
@@ -62,5 +63,7 @@ ForumsConfig.MaximumThreadContentLength = 1000
 ForumsConfig.MinimumPostLength = 10
 ForumsConfig.MaximumPostLength = 1000
 
+///////////////////////////////////////////////////////////////
+/// Determines when to split up into pages
 ForumsConfig.ThreadsPerPage = 10
 ForumsConfig.PostsPerPage = 10
