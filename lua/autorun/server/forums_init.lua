@@ -83,7 +83,8 @@ hook.Add( "PlayerAuthed", "IGForums_PlayerAuth", function( ply, steamID, uniquei
 	VALUES( %s, %s, %s, %d );
 	]]
 	local playerExistsQuery = [[
-	SELECT * FROM forum_users
+	SELECT * 
+	FROM forum_users
 	WHERE steam64 = %s;
 	]]
 	local rank = "user"
@@ -112,10 +113,7 @@ hook.Add( "PlayerSay", "IGForums_PlayerSay", function( ply, text, team )
 	local chatCommand = ForumsConfig.ChatCommand or "!forums"
 	local cmdLength = string.len( chatCommand )
 	if ( string.lower( string.sub( text, 1, cmdLength ) ) == string.lower( chatCommand ) ) then
-		net.Start( "IGForums_ForumsNET" )
-			net.WriteUInt( IGFORUMS_OPENFORUMS, 16 )
-		net.Send( ply )
-		ply:NetworkCategories( )
+		ply:OpenForumViewer( )
 	end
 end )
 

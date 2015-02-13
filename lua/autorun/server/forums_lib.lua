@@ -4,7 +4,8 @@ IGForums = IGForums or { }
 /// Checks if a category exists, used before creating a thread.
 function IGForums:CategoryExists( id )
 	local categoryQuery = [[
-	SELECT id FROM forum_categories
+	SELECT id 
+	FROM forum_categories
 	WHERE id = %d;
 	]]
 	local resultSet = sql.Query( string.format( categoryQuery, id ) )
@@ -16,7 +17,8 @@ end
 /// Checks if a thread exists, used before creating a post.
 function IGForums:ThreadExists( id )
 	local threadQuery = [[
-	SELECT id FROM forum_threads
+	SELECT id 
+	FROM forum_threads
 	WHERE id = %d;
 	]]
 	local resultSet = sql.Query( string.format( threadQuery, id ) )
@@ -29,7 +31,8 @@ end
 /// if no icon is found.
 function IGForums:GetIconID( iconPath )
 	local iconQuery = [[
-	SELECT id FROM forum_icons
+	SELECT id 
+	FROM forum_icons
 	WHERE path = %s;
 	]]
 	local resultSet = sql.Query( string.format( iconQuery, SQLStr( iconPath ) ) )
@@ -62,7 +65,8 @@ end
 /// Checks if a specific userID is banned.
 function IGForums:IsIDBanned( userID )
 	local userQuery = [[
-	SELECT banned FROM forum_users
+	SELECT banned 
+	FROM forum_users
 	WHERE user_id = %d;
 	]]
 	local resultSet = sql.Query( string.format( userQuery, userID ) )
@@ -106,7 +110,8 @@ end
 /// Toggles whether a thread is a sticky or not.
 function IGForums:ToggleThreadSticky( threadID, activator )
 	local threadQuery = [[
-	SELECT sticky FROM forum_threads
+	SELECT sticky 
+	FROM forum_threads
 	WHERE id = %d;
 	]]
 	local resultSet = sql.Query( string.format( threadQuery, threadID ) )
@@ -140,7 +145,8 @@ end
 /// Toggles the locked status of a thread.
 function IGForums:ToggleThreadLock( threadID, activator )
 	local threadQuery = [[
-	SELECT locked FROM forum_threads
+	SELECT locked 
+	FROM forum_threads
 	WHERE id = %d;
 	]]
 	local resultSet = sql.Query( string.format( threadQuery, threadID ) )
@@ -175,14 +181,16 @@ end
 /// it or below it.
 function IGForums:MoveCategory( categoryID, enum )
 	local categoryCount = [[
-	SELECT COUNT( id ) AS amount FROM forum_categories;
+	SELECT COUNT( id ) AS amount 
+	FROM forum_categories;
 	]]
 	local countResultSet = sql.Query( categoryCount )
 	if ( !countResultSet or tonumber( countResultSet[1].amount ) <= 1 ) then
 		return
 	end
 	local categoryQuery = [[
-	SELECT priority FROM forum_categories
+	SELECT priority 
+	FROM forum_categories
 	WHERE id = %d;
 	]]
 	local resultSet = sql.Query( string.format( categoryQuery, categoryID ) )
@@ -193,7 +201,8 @@ function IGForums:MoveCategory( categoryID, enum )
 	WHERE id = %d;
 	]]
 	local switchCategoryQuery = [[
-	SELECT id FROM forum_categories
+	SELECT id 
+	FROM forum_categories
 	WHERE priority = %d
 	LIMIT 1;
 	]]
@@ -225,7 +234,8 @@ function IGForums:CreateCategory( icon, name, desc, priority, activator )
 	VALUES( %d, %s, %s, %d );
 	]]
 	local priorityQuery = [[
-	SELECT MAX( priority ) AS lastPriority FROM forum_categories;
+	SELECT MAX( priority ) AS lastPriority 
+	FROM forum_categories;
 	]]
 	local lastPriority = ( tonumber( sql.Query( priorityQuery )[1].lastPriority ) or 1 )
 	if not ( self:CheckCategorySyntax( icon, name, desc, activator ) ) then return end
@@ -293,7 +303,8 @@ function IGForums:CreatePost( ply, threadID, text )
 	ply.nextForumPost = CurTime( ) + ForumsConfig.PostCooldown
 	if not ( self:CheckPostSyntax( text, ply ) ) then return end
 	local threadQuery = [[
-	SELECT locked FROM forum_threads
+	SELECT locked 
+	FROM forum_threads
 	WHERE id = %d;
 	]]
 	local threadResultSet = sql.Query( string.format( threadQuery, tonumber( threadID ) ) )
@@ -316,7 +327,8 @@ end
 /// Deletes a post by its ID
 function IGForums:DeletePost( postID, activator )
 	local postQuery = [[
-	SELECT user_id FROM forum_posts
+	SELECT user_id 
+	FROM forum_posts
 	WHERE id = %d;
 	]]
 	local resultSet = sql.Query( string.format( postQuery, postID ) )
@@ -355,7 +367,8 @@ function IGForums:DeletePostsByID( id, activator )
 	end
 	self:UpdatePostCountByID( id, player.GetAll( ) )
 	local threadQuery = [[
-	SELECT id FROM forum_threads
+	SELECT id 
+	FROM forum_threads
 	WHERE user_id = %d;
 	]]
 	local resultSet = sql.Query( string.format( threadQuery, id ) )
@@ -383,7 +396,8 @@ end
 function IGForums:UpdatePostCountByID( id, ply )
 	local postCount = 0
 	local postQuery = [[
-	SELECT COUNT( id ) AS amount FROM forum_posts
+	SELECT COUNT( id ) AS amount 
+	FROM forum_posts
 	WHERE user_id = %d;
 	]]
 	local resultSet = sql.Query( string.format( postQuery, id ) )
@@ -435,13 +449,15 @@ end
 /// Deletes a thread by its ID.
 function IGForums:DeleteThread( threadID, activator )
 	local threadQuery = [[
-	SELECT user_id FROM forum_threads
+	SELECT user_id 
+	FROM forum_threads
 	WHERE id = %d;
 	]]
 	local resultSet = sql.Query( string.format( threadQuery, threadID ) )
 	if not ( resultSet ) then return end
 	local postQuery = [[
-	SELECT id FROM forum_posts
+	SELECT id 
+	FROM forum_posts
 	WHERE thread_id = %d;
 	]]
 	local postResultSet = sql.Query( string.format( postQuery, threadID ) )
@@ -498,7 +514,8 @@ end
 /// start from one and not repeat.
 function IGForums:OrganizeCategories( )
 	local categoryQuery = [[
-	SELECT * FROM forum_categories;
+	SELECT * 
+	FROM forum_categories;
 	]]
 	local resultSet = sql.Query( categoryQuery )
 	if not ( resultSet ) then return end
@@ -519,7 +536,8 @@ end
 function IGForums:GetRankByID( userID )
 	local userRank = "user"
 	local userRankQuery = [[
-	SELECT rank FROM forum_users
+	SELECT rank 
+	FROM forum_users
 	WHERE user_id = %d;
 	]]
 	local resultSet = sql.Query( string.format( userRankQuery, userID ) )

@@ -1,6 +1,15 @@
 local meta = FindMetaTable( "Player" )
 
 ///////////////////////////////////////////////////////////////
+/// Opens the forum viewer.
+function meta:OpenForumViewer( )
+	net.Start( "IGForums_ForumsNET" )
+		net.WriteUInt( IGFORUMS_OPENFORUMS, 16 )
+	net.Send( self )
+	self:NetworkCategories( )
+end
+
+///////////////////////////////////////////////////////////////
 /// Sends a hint to the client's forum viewer which displays
 /// at the top. 
 function meta:SendForumHint( message, length )
@@ -63,7 +72,8 @@ end
 function meta:GetForumsRank( )
 	local userRank = "user"
 	local userRankQuery = [[
-	SELECT rank FROM forum_users
+	SELECT rank 
+	FROM forum_users
 	WHERE user_id = %d;
 	]]
 	local resultSet = sql.Query( string.format( userRankQuery, self:GetForumsID( ) ) )
@@ -75,7 +85,8 @@ end
 /// Gets the player's UserID, if it fails it returns -1.
 function meta:GetForumsID( )
 	local idQuery = [[
-	SELECT user_id FROM forum_users
+	SELECT user_id 
+	FROM forum_users
 	WHERE steam64 = %s;
 	]]
 	local id = self.forumsID
@@ -123,7 +134,8 @@ end
 /// Networks all categories to the client
 function meta:NetworkCategories( )
 	local categoriesQuery = [[
-	SELECT * FROM forum_categories;
+	SELECT * 
+	FROM forum_categories;
 	]]
 	local resultSet = sql.Query( categoriesQuery )
 	if not ( resultSet ) then return end
@@ -150,7 +162,8 @@ end
 /// to the client.
 function meta:NetworkThreads( categoryID, page )
 	local threadCountQuery = [[
-	SELECT COUNT( id ) AS amount FROM forum_threads
+	SELECT COUNT( id ) AS amount 
+	FROM forum_threads
 	WHERE category_id = %d;
 	]]
 	local threadCountResultSet = sql.Query( string.format( threadCountQuery, tonumber( categoryID ) ) )
@@ -166,24 +179,28 @@ function meta:NetworkThreads( categoryID, page )
 	if ( pageAmount > 1 ) then
 		local pageOffset = ( page - 1 ) * ForumsConfig.ThreadsPerPage
 		categoryQuery = [[
-		SELECT id, user_id, icon_id, time, name, text, locked, sticky FROM forum_threads
+		SELECT id, user_id, icon_id, time, name, text, locked, sticky 
+		FROM forum_threads
 		WHERE category_id = %d
 		ORDER BY time DESC
 		LIMIT ]] .. pageOffset .. ", " .. ForumsConfig.ThreadsPerPage .. ";"
 	else
 		categoryQuery = [[
-		SELECT id, user_id, icon_id, time, name, text, locked, sticky FROM forum_threads
+		SELECT id, user_id, icon_id, time, name, text, locked, sticky 
+		FROM forum_threads
 		WHERE category_id = %d; 
 		]]
 	end
 	local resultSet = sql.Query( string.format( categoryQuery, categoryID ) )
 	if not ( resultSet ) then return end
 	local postQuery = [[
-	SELECT COUNT( id ) AS amount FROM forum_posts
+	SELECT COUNT( id ) AS amount 
+	FROM forum_posts
 	WHERE thread_id = %d;
 	]]
 	local lastPostQuery = [[
-	SELECT MAX( time ) AS lastPost FROM forum_posts
+	SELECT MAX( time ) AS lastPost 
+	FROM forum_posts
 	WHERE thread_id = %d;
 	]]
 	for index, data in ipairs ( resultSet ) do
@@ -215,7 +232,8 @@ end
 /// to the client
 function meta:NetworkPosts( threadID, page )
 	local postCountQuery = [[
-	SELECT COUNT( id ) AS amount FROM forum_posts
+	SELECT COUNT( id ) AS amount 
+	FROM forum_posts
 	WHERE thread_id = %d;
 	]]
 	local postCountResultSet = sql.Query( string.format( postCountQuery, tonumber( threadID ) ) )
@@ -226,7 +244,8 @@ function meta:NetworkPosts( threadID, page )
 	if ( pageAmount > 1 ) then
 		local pageOffset = ( page - 1 ) * ForumsConfig.PostsPerPage
 		threadQuery = [[
-		SELECT id, user_id, time, text FROM forum_posts
+		SELECT id, user_id, time, text 
+		FROM forum_posts
 		WHERE thread_id = %d
 		ORDER BY time DESC
 		LIMIT ]] .. pageOffset .. ", " .. ForumsConfig.PostsPerPage .. ";"
@@ -237,7 +256,8 @@ function meta:NetworkPosts( threadID, page )
 		]]
 	end
 	local categoryQuery = [[
-	SELECT category_id FROM forum_threads
+	SELECT category_id 
+	FROM forum_threads
 	WHERE id = %d;
 	]]
 	local resultSet = sql.Query( string.format( threadQuery, tonumber( threadID ) ) )
@@ -268,7 +288,8 @@ end
 /// Networks all the icons to the client.
 function meta:NetworkIcons( )
 	local iconQuery = [[
-	SELECT * FROM forum_icons;
+	SELECT * 
+	FROM forum_icons;
 	]]
 	local resultSet = sql.Query( iconQuery )
 	if not ( resultSet ) then return end
@@ -285,7 +306,8 @@ end
 /// updating the post count is optional.
 function meta:NetworkUsers( updatePostCount )
 	local userQuery = [[
-	SELECT * FROM forum_users;
+	SELECT * 
+	FROM forum_users;
 	]]
 	local resultSet = sql.Query( userQuery )
 	if not ( resultSet ) then return end

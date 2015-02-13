@@ -140,3 +140,7 @@ concommand.Add( "igforums_fixthreadicons", function( ply, cmd, args, fstring )
 	end
 	ply:ChatPrint( "Fixed the icons for " .. string.Comma( fixedThreads ) .. " threads." )
 end )
+
+concommand.Add( "openforums", function( ply, cmd, args, fstring )
+	ply:OpenForumViewer( )
+end )
