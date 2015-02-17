@@ -41,6 +41,7 @@ hook.Add( "Initialize", "IGForums_ResolutionInitialize", function( )
 	} : ParentToHUD( )
 end )
 
+self:CreateFonts( )
 hook.Add( "ResolutionChanged", "IGForums_ResolutionChanged", function( w, h )
 	scrW = w
 	scrH = h
@@ -77,7 +78,6 @@ end
 PANEL = {}
 
 function PANEL:Init( )
-	self:CreateFonts( )
 	local addWidth, addHeight = scrW * widthMulti, scrH * heightMulti
 	self:SetSize( baseWidth + addWidth, baseHeight + addHeight )
 	self:Center( )
