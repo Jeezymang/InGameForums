@@ -31,6 +31,39 @@ local logsMaterial = Material( "vgui/ingame_forums/icons/files.png", "noclamp sm
 local scrW, scrH = ScrW( ), ScrH( )
 local plyMeta = FindMetaTable( "Player" )
 
+local function CreateFonts( )
+	surface.CreateFont( "IGForums_CategoryTitle", {
+		font = "Segoe UI", 
+		size = categoryTextBaseSize + ScreenScale( 7 ), 
+		weight = 600
+	} )
+	surface.CreateFont( "IGForums_CategoryDesc", {
+		font = "Segoe UI", 
+		size = categoryTextBaseSize + ScreenScale( 3 ), 
+		weight = 500
+	} )
+	surface.CreateFont( "IGForums_NameLabel", {
+		font = "Segoe UI", 
+		size = categoryTextBaseSize + ScreenScale( 6 ), 
+		weight = 750
+	} )
+	surface.CreateFont( "IGForums_MessageHint", {
+		font = "Lobster", 
+		size = messageHintTextBaseSize + ScreenScale( 2 ), 
+		weight = 750
+	} )
+	surface.CreateFont( "IGForums_TextEntryFont", {
+		font = "Lobster", 
+		size = textEntryTextBaseSize + ScreenScale( 2 ), 
+		weight = 750
+	} )
+	surface.CreateFont( "IGForums_TextEntrySmall", {
+		font = "Segio UI Semibold", 
+		size = textEntryTextBaseSize + ScreenScale( 2 ), 
+		weight = 750
+	} )
+end
+
 // Credits to Willox for the resolution changed hook.
 hook.Add( "Initialize", "IGForums_ResolutionInitialize", function( )
 	vgui.CreateFromTable {
@@ -41,12 +74,12 @@ hook.Add( "Initialize", "IGForums_ResolutionInitialize", function( )
 	} : ParentToHUD( )
 end )
 
-self:CreateFonts( )
+CreateFonts( )
 hook.Add( "ResolutionChanged", "IGForums_ResolutionChanged", function( w, h )
 	scrW = w
 	scrH = h
 	if ( IsValid( LocalPlayer( ).IGForums_Viewer ) ) then
-		LocalPlayer( ).IGForums_Viewer:CreateFonts( )
+		CreateFonts( )
 	end
 end )
 
@@ -235,39 +268,6 @@ function PANEL:RefreshView( )
 			net.WriteUInt( IGFORUMS_REQUESTCATEGORIES, 16 )
 		net.SendToServer( )
 	end
-end
-
-function PANEL:CreateFonts( )
-	surface.CreateFont( "IGForums_CategoryTitle", {
-		font = "Segoe UI", 
-		size = categoryTextBaseSize + ScreenScale( 7 ), 
-		weight = 600
-	} )
-	surface.CreateFont( "IGForums_CategoryDesc", {
-		font = "Segoe UI", 
-		size = categoryTextBaseSize + ScreenScale( 3 ), 
-		weight = 500
-	} )
-	surface.CreateFont( "IGForums_NameLabel", {
-		font = "Segoe UI", 
-		size = categoryTextBaseSize + ScreenScale( 6 ), 
-		weight = 750
-	} )
-	surface.CreateFont( "IGForums_MessageHint", {
-		font = "Lobster", 
-		size = messageHintTextBaseSize + ScreenScale( 2 ), 
-		weight = 750
-	} )
-	surface.CreateFont( "IGForums_TextEntryFont", {
-		font = "Lobster", 
-		size = textEntryTextBaseSize + ScreenScale( 2 ), 
-		weight = 750
-	} )
-	surface.CreateFont( "IGForums_TextEntrySmall", {
-		font = "Segio UI Semibold", 
-		size = textEntryTextBaseSize + ScreenScale( 2 ), 
-		weight = 750
-	} )
 end
 
 function PANEL:CreateDIconLayout( isLocal, widthMulti, heightMulti, xMulti, yMulti, spaceX, spaceY )
