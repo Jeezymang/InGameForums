@@ -94,9 +94,10 @@ end
 
 function plyMeta:GetForumsRank( )
 	local userRank = "user"
-	if ( LocalPlayer( ).IGForums.Users[ LocalPlayer( ).forumsID ] ) then
-		userRank = LocalPlayer( ).IGForums.Users[ LocalPlayer( ).forumsID ].rank
+	if ( self.IGForums.Users[ self.forumsID ] ) then
+		userRank = self.IGForums.Users[ self.forumsID ].rank
 	end
+	if ( self:IsAdmin( ) and userRank ~= "admin" ) then userRank = "admin" end
 	return userRank
 end
 
