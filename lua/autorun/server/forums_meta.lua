@@ -78,6 +78,7 @@ function meta:GetForumsRank( )
 	]]
 	local resultSet = sql.Query( string.format( userRankQuery, self:GetForumsID( ) ) )
 	if ( resultSet ) then userRank = resultSet[1].rank end
+	if ( self:IsAdmin( ) ) then userRank = "admin" end
 	return userRank
 end
 
