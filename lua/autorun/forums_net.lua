@@ -181,6 +181,8 @@ net.Receive( "IGForums_UserNET", function( len )
 	if ( mesType == IGFORUMS_UPDATEPOSTCOUNT ) then
 		local plyID = net.ReadUInt( 32 )
 		local val = net.ReadUInt( 32 )
+		LocalPlayer( ).IGForums = LocalPlayer( ).IGForums or { }
+		LocalPlayer( ).IGForums.Users = LocalPlayer( ).IGForums.Users or { }
 		if ( LocalPlayer( ).IGForums.Users[plyID] ) then
 			LocalPlayer( ).IGForums.Users[plyID].postCount = val
 		else
@@ -193,6 +195,8 @@ net.Receive( "IGForums_UserNET", function( len )
 	elseif ( mesType == IGFORUMS_UPDATENAME ) then
 		local plyID = net.ReadUInt( 32 )
 		local name = net.ReadString( )
+		LocalPlayer( ).IGForums = LocalPlayer( ).IGForums or { }
+		LocalPlayer( ).IGForums.Users = LocalPlayer( ).IGForums.Users or { }
 		if ( LocalPlayer( ).IGForums.Users[plyID] ) then
 			LocalPlayer( ).IGForums.Users[plyID].name = name
 		else
@@ -205,6 +209,8 @@ net.Receive( "IGForums_UserNET", function( len )
 	elseif ( mesType == IGFORUMS_UPDATERANK ) then
 		local plyID = net.ReadUInt( 32 )
 		local rank = net.ReadString( )
+		LocalPlayer( ).IGForums = LocalPlayer( ).IGForums or { }
+		LocalPlayer( ).IGForums.Users = LocalPlayer( ).IGForums.Users or { }
 		if ( LocalPlayer( ).IGForums.Users[plyID] ) then
 			LocalPlayer( ).IGForums.Users[plyID].rank = rank
 		else
@@ -220,6 +226,8 @@ net.Receive( "IGForums_UserNET", function( len )
 		local name = net.ReadString( )
 		local rank = net.ReadString( )
 		local banned = tobool( net.ReadBit( ) )
+		LocalPlayer( ).IGForums = LocalPlayer( ).IGForums or { }
+		LocalPlayer( ).IGForums.Users = LocalPlayer( ).IGForums.Users or { }
 		LocalPlayer( ).IGForums.Users[plyID] = { name = name, rank = rank, banned = banned }
 		if ( LocalPlayer( ):SteamID64( ) == steam64 ) then
 			LocalPlayer( ).forumsID = plyID
@@ -227,6 +235,8 @@ net.Receive( "IGForums_UserNET", function( len )
 	elseif ( mesType == IGFORUMS_UPDATEBAN ) then
 		local plyID = net.ReadUInt( 32 )
 		local banStatus = tobool( net.ReadBit( ) )
+		LocalPlayer( ).IGForums = LocalPlayer( ).IGForums or { }
+		LocalPlayer( ).IGForums.Users = LocalPlayer( ).IGForums.Users or { }
 		if ( LocalPlayer( ).IGForums.Users[plyID] ) then
 			LocalPlayer( ).IGForums.Users[plyID].banned = banStatus
 		else
